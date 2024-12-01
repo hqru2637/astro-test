@@ -3,12 +3,20 @@ import BaseHead from '../../components/BaseHead.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts';
-import { getCollection } from 'astro:content';
+import { getCollection, type CollectionEntry } from 'astro:content';
 import FormattedDate from '../../components/FormattedDate.astro';
+import { getFileInfo, type GitFileInfo } from '../../scripts/getFileInfo';
 
-const posts = (await getCollection('blog')).sort(
-	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+type PostData = CollectionEntry<'blog'>['data'] & GitFileInfo & { slug: string };
+
+const posts: PostData[] = await Promise.all(
+	(await getCollection('blog')).map(async post => {
+		const fileInfo = await getFileInfo(`src/content/blog/${post.id}`);
+		return { ...post.data, ...fileInfo!, slug: post.slug }
+	})
 );
+posts.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+
 ---
 
 <!doctype html>
@@ -91,13 +99,13 @@ const posts = (await getCollection('blog')).sort(
 			<section>
 				<ul>
 					{
-						posts.map((post) => (
+						posts.filter(p => p.published).map((post) => (
 							<li>
 								<a href={`/blog/${post.slug}/`}>
-									<img width={720} height={360} src={post.data.heroImage} alt="" />
-									<h4 class="title">{post.data.title}</h4>
+									<img width={720} height={360} src={post.heroImage} alt="" />
+									<h4 class="title">{post.title}</h4>
 									<p class="date">
-										<FormattedDate date={post.data.pubDate} />
+										<FormattedDate date={post.createdAt} />
 									</p>
 								</a>
 							</li>

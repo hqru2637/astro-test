@@ -1,7 +1,8 @@
 ---
 title: 'Second post'
 description: 'Lorem ipsum dolor sit amet'
-pubDate: 'Jul 15 2022'
+author: 'github:hqru2637'
+tags: []
 heroImage: '/blog-placeholder-4.jpg'
 ---
 

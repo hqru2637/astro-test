@@ -1,20 +1,30 @@
 ---
 import { type CollectionEntry, getCollection } from 'astro:content';
 import BlogPost from '../../layouts/BlogPost.astro';
+import { getFileInfo, type GitFileInfo } from '../../scripts/getFileInfo';
 
 export async function getStaticPaths() {
 	const posts = await getCollection('blog');
-	return posts.map((post) => ({
-		params: { slug: post.slug },
-		props: post,
-	}));
-}
-type Props = CollectionEntry<'blog'>;
 
-const post = Astro.props;
+	return Promise.all(
+		posts.map(async (post) => {
+			const filePath = `src/content/blog/${post.id}`;
+			const gitInfo = await getFileInfo(filePath);
+			return {
+				params: { slug: post.slug },
+				props: { ...post, gitInfo },
+			};
+		})
+	);
+}
+
+type Props = CollectionEntry<'blog'> & {
+	gitInfo: GitFileInfo
+}
+
+const post = Astro.props; // PropsからGit情報を取得
 const { Content } = await post.render();
 ---
-
-<BlogPost {...post.data}>
+<BlogPost {...post.data} {...post.gitInfo}>
 	<Content />
 </BlogPost>
